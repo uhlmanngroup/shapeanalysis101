@@ -1,7 +1,9 @@
 # Shape Analysis 101
 
 ### To retrieve data
-TODO: write a bash script to automate this
+```diff
+@@ TODO: write a bash script to automate this @@
+```
 
 1. Create a `data` folder in the repository
 
