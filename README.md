@@ -30,7 +30,7 @@
 
 ### Sources
 * Dryden, I. L., & Mardia, K. V. (2016). Statistical shape analysis: with applications in R. John Wiley & Sons.
-* Song, A., Uhlmann, V., Fageot, J., & Unser, M. (2020). Dictionary learning for two-dimensional kendall shapes. SIAM Journal on Imaging Sciences, 13(1), 141-175.
+* Song, A., Uhlmann, V., Fageot, J., & Unser, M. (2020). Dictionary learning for two-dimensional Kendall shapes. SIAM Journal on Imaging Sciences, 13(1), 141-175.
 
 ### Acknowledgements
 We thank Anna Song for useful discussions and Jean Feydy for sharing his excellent teaching material (https://www.jeanfeydy.com/Teaching/), which inspired part of this repository's content.
