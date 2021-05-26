@@ -33,4 +33,4 @@
 * Song, A., Uhlmann, V., Fageot, J., & Unser, M. (2020). Dictionary learning for two-dimensional Kendall shapes. SIAM Journal on Imaging Sciences, 13(1), 141-175.
 
 ### Acknowledgements
-We thank Anna Song for useful discussions and Jean Feydy for sharing his excellent teaching material (https://www.jeanfeydy.com/Teaching/), which inspired part of this repository's content.
+Part of the material from this course was adapted from Paula Balcells' Bachelor Thesis work carried out in the Uhlmann group. We also thank Anna Song for useful discussions and Jean Feydy for sharing his excellent teaching material (https://www.jeanfeydy.com/Teaching/), which inspired part of this course's structure. 
