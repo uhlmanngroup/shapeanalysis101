@@ -5,9 +5,10 @@ import numpy as np
 import tifffile
 import imageio
 from skimage.segmentation import find_boundaries
+from tifffile import TiffFileError
 
 
-def generate_labels():
+def generate_labels(threshold):
     masks_dir = 'data/BBBC010/masks'
     images_dir = 'data/BBBC010/images'
     labels_dir = 'data/BBBC010/labels'
@@ -42,7 +43,7 @@ def generate_labels():
             num_pixels = len(coords[0])
             average_intensity = gfp_mask.sum() / num_pixels
             max_intensity = gfp_mask.max()
-            label = 1 if average_intensity > 500 else 0
+            label = 1 if average_intensity > threshold else 0
             path_to_file = os.path.join(
                 labels_dir, mask_name[:6] + '_label.csv'
             )
@@ -60,8 +61,15 @@ def generate_labels():
                                  'max_intensity': max_intensity}}
                 )
 
+def load_data(celegans_masks_dir,
+              celegans_labels_dir,
+              cells_masks_dir,
+              nuclei_masks_dir):
+    data = []
 
-def load_data(masks_dir, labels_dir):
+    # load C.elegans + labels
+    masks_dir = celegans_masks_dir
+    labels_dir = celegans_labels_dir
     mask_files = os.listdir(masks_dir)
     mask_files.sort()
     mask_files = mask_files[1:]
@@ -69,7 +77,6 @@ def load_data(masks_dir, labels_dir):
     label_files = os.listdir(labels_dir)
     label_files.sort()
 
-    data = []
     for mask_name in mask_files:
         mask = imageio.imread(
             os.path.join(masks_dir, mask_name)
@@ -87,6 +94,46 @@ def load_data(masks_dir, labels_dir):
                 else:
                     label = int(row[0])
         data += [{'points': points, 'label': label}]
+
+    random.shuffle(data)
+    return data
+
+    # load macrophages BBBC020
+    # load cells -> label = 2
+    masks_dir = cells_masks_dir
+    mask_files = os.listdir(masks_dir)
+    for mask_name in mask_files:
+        mask = imageio.imread(
+            os.path.join(masks_dir, mask_name)
+        )
+        points = mask_to_points(mask)
+        if len(points) > 200:
+            data += [{'points': points, 'label': 2}]
+        else:
+            continue
+        # with napari.gui_qt():
+        #     viewer = napari.Viewer()
+        #     viewer.add_points(points, size=0.5, face_color='red')
+
+    # load nuclei -> label = 3
+    masks_dir = nuclei_masks_dir
+    mask_files = os.listdir(masks_dir)
+    for mask_name in mask_files:
+        try:
+            mask = imageio.imread(
+                os.path.join(masks_dir, mask_name)
+            )
+            points = mask_to_points(mask)
+            if len(points) > 200:
+                data += [{'points': points, 'label': 3}]
+            else:
+                continue
+        except TiffFileError:
+            continue
+        # with napari.gui_qt():
+        #     viewer = napari.Viewer()
+        #     viewer.add_points(points, size=0.5, face_color='red')
+
     random.shuffle(data)
     return data
 
@@ -118,3 +165,20 @@ class RandomCoordsFlip:
             tensor[:, curr_ax] = coord_max - tensor[:, curr_ax]
         return tensor
 
+
+if __name__ == '__main__':
+    import napari
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--threshold', type=int, default=800)
+    args = parser.parse_args()
+
+    generate_labels(threshold=args.threshold)
+    # celegans_masks_dir = 'data/BBBC010/masks'
+    # celegans_labels_dir = 'data/BBBC010/labels'
+    # cells_masks_dir = 'data/BBBC020/BBC020_v1_outlines_cells'
+    # nuclei_masks_dir = 'data/BBBC020/BBC020_v1_outlines_nuclei'
+    # load_data(celegans_masks_dir,
+    #           celegans_labels_dir,
+    #           cells_masks_dir,
+    #           nuclei_masks_dir)

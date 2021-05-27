@@ -4,22 +4,37 @@ import random
 import numpy as np
 import imageio
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, WeightedRandomSampler
 from data_utils import load_data, Center, RandomCoordsFlip
 
 
-def get_celegans_loaders(masks_dir, labels_dir, batch_size=10):
-    data = load_data(masks_dir, labels_dir)
+def get_celegans_loaders(celegans_masks_dir,
+                         celegans_labels_dir,
+                         cells_masks_dir,
+                         nuclei_masks_dir,
+                         batch_size=10):
 
-    idx_1 = int(len(data) * 0.8)
-    idx_2 = int(len(data) * 0.9)
+    data = load_data(celegans_masks_dir,
+                     celegans_labels_dir,
+                     cells_masks_dir,
+                     nuclei_masks_dir)
+
+    idx_1 = int(len(data) * 0.75)
+    idx_2 = int(len(data) * 0.999)
     train_data = CelegansDataset(data[:idx_1])
     val_data = CelegansDataset(data[idx_1: idx_2])
     test_data = CelegansDataset(data[idx_2:])
 
+    labels = np.array([x[1] for x in train_data])
+    w1 = labels.sum() / len(labels)
+    w2 = 1 / w1
+    weights = [w1 if label == 0 else w2 for label in labels]
+
+    sampler = WeightedRandomSampler(weights, len(train_data), replacement=True)
+
     train_loader = DataLoader(train_data,
-                              batch_size=batch_size,
-                              shuffle=True)
+                              sampler=sampler,
+                              batch_size=batch_size)
     val_loader = DataLoader(val_data,
                             batch_size=1,
                             shuffle=False)

@@ -5,21 +5,36 @@ import torch.nn.functional as F
 
 
 class SpatialTransformer3d(nn.Module):
-    def __init__(self):
+    def __init__(self, channels):
         super().__init__()
-        self.conv1 = nn.Conv1d(2, 64, 1)
-        self.conv2 = nn.Conv1d(64, 128, 1)
-        self.conv3 = nn.Conv1d(128, 1024, 1)
-        self.fc1 = nn.Linear(1024, 512)
-        self.fc2 = nn.Linear(512, 256)
-        self.fc3 = nn.Linear(256, 4)
+        self.conv1 = nn.Conv1d(2, channels, 1)
+        self.conv2 = nn.Conv1d(channels, 2*channels, 1)
+        self.conv3 = nn.Conv1d(2*channels, 16*channels, 1)
+        self.fc1 = nn.Linear(16*channels, 8*channels)
+        self.fc2 = nn.Linear(8*channels, 4*channels)
+        self.fc3 = nn.Linear(4*channels, 4)
         self.relu = nn.ReLU()
 
-        self.bn1 = nn.BatchNorm1d(64)
-        self.bn2 = nn.BatchNorm1d(128)
-        self.bn3 = nn.BatchNorm1d(1024)
-        self.bn4 = nn.BatchNorm1d(512)
-        self.bn5 = nn.BatchNorm1d(256)
+        self.bn1 = nn.BatchNorm1d(channels)
+        self.bn2 = nn.BatchNorm1d(2*channels)
+        self.bn3 = nn.BatchNorm1d(16*channels)
+        self.bn4 = nn.BatchNorm1d(8*channels)
+        self.bn5 = nn.BatchNorm1d(4*channels)
+
+        self.channels = channels
+
+        # self.conv1 = nn.Conv1d(2, 64, 1)
+        # self.conv2 = nn.Conv1d(64, 128, 1)
+        # self.conv3 = nn.Conv1d(128, 1024, 1)
+        # self.fc1 = nn.Linear(1024, 512)
+        # self.fc2 = nn.Linear(512, 256)
+        # self.fc3 = nn.Linear(256, 4)
+        # self.relu = nn.ReLU()
+        # self.bn1 = nn.BatchNorm1d(64)
+        # self.bn2 = nn.BatchNorm1d(128)
+        # self.bn3 = nn.BatchNorm1d(1024)
+        # self.bn4 = nn.BatchNorm1d(512)
+        # self.bn5 = nn.BatchNorm1d(256)
 
     def forward(self, x):
         batchsize = x.size()[0]
@@ -27,7 +42,7 @@ class SpatialTransformer3d(nn.Module):
         x = F.relu(self.bn2(self.conv2(x)))
         x = F.relu(self.bn3(self.conv3(x)))
         x = torch.max(x, 2, keepdim=True)[0]
-        x = x.view(-1, 1024)
+        x = x.view(-1, 16*self.channels)
 
         x = F.relu(self.bn4(self.fc1(x)))
         x = F.relu(self.bn5(self.fc2(x)))
@@ -45,21 +60,37 @@ class SpatialTransformer3d(nn.Module):
 
 
 class SpatialTransformerkd(nn.Module):
-    def __init__(self, k=64):
+    def __init__(self, channels, k=64):
         super().__init__()
-        self.conv1 = torch.nn.Conv1d(k, 64, 1)
-        self.conv2 = torch.nn.Conv1d(64, 128, 1)
-        self.conv3 = torch.nn.Conv1d(128, 1024, 1)
-        self.fc1 = nn.Linear(1024, 512)
-        self.fc2 = nn.Linear(512, 256)
-        self.fc3 = nn.Linear(256, k*k)
+        self.conv1 = nn.Conv1d(k, channels, 1)
+        self.conv2 = nn.Conv1d(channels, 2*channels, 1)
+        self.conv3 = nn.Conv1d(2*channels, 16*channels, 1)
+        self.fc1 = nn.Linear(16*channels, 8*channels)
+        self.fc2 = nn.Linear(8*channels, 4*channels)
+        self.fc3 = nn.Linear(4*channels, k*k)
         self.relu = nn.ReLU()
 
-        self.bn1 = nn.BatchNorm1d(64)
-        self.bn2 = nn.BatchNorm1d(128)
-        self.bn3 = nn.BatchNorm1d(1024)
-        self.bn4 = nn.BatchNorm1d(512)
-        self.bn5 = nn.BatchNorm1d(256)
+        self.bn1 = nn.BatchNorm1d(channels)
+        self.bn2 = nn.BatchNorm1d(2*channels)
+        self.bn3 = nn.BatchNorm1d(16*channels)
+        self.bn4 = nn.BatchNorm1d(8*channels)
+        self.bn5 = nn.BatchNorm1d(4*channels)
+
+        self.channels = channels
+
+        # self.conv1 = torch.nn.Conv1d(k, 64, 1)
+        # self.conv2 = torch.nn.Conv1d(64, 128, 1)
+        # self.conv3 = torch.nn.Conv1d(128, 1024, 1)
+        # self.fc1 = nn.Linear(1024, 512)
+        # self.fc2 = nn.Linear(512, 256)
+        # self.fc3 = nn.Linear(256, k*k)
+        # self.relu = nn.ReLU()
+
+        # self.bn1 = nn.BatchNorm1d(64)
+        # self.bn2 = nn.BatchNorm1d(128)
+        # self.bn3 = nn.BatchNorm1d(1024)
+        # self.bn4 = nn.BatchNorm1d(512)
+        # self.bn5 = nn.BatchNorm1d(256)
 
         self.k = k
 
@@ -69,7 +100,7 @@ class SpatialTransformerkd(nn.Module):
         x = F.relu(self.bn2(self.conv2(x)))
         x = F.relu(self.bn3(self.conv3(x)))
         x = torch.max(x, 2, keepdim=True)[0]
-        x = x.view(-1, 1024)
+        x = x.view(-1, 16*self.channels)
 
         x = F.relu(self.bn4(self.fc1(x)))
         x = F.relu(self.bn5(self.fc2(x)))
@@ -88,18 +119,28 @@ class SpatialTransformerkd(nn.Module):
 
 
 class PointNetFeat(nn.Module):
-    def __init__(self, global_feat=True, feature_transform=False):
+    def __init__(self, channels, global_feat=True, feature_transform=False):
         super().__init__()
-        self.transformer = SpatialTransformer3d()
+        self.transformer = SpatialTransformer3d(channels)
         if feature_transform:
-            self.feat_transformer = SpatialTransformerkd(k=64)
-        self.conv1 = nn.Conv1d(2, 64, 1)
-        self.conv2 = nn.Conv1d(64, 128, 1)
-        self.conv3 = nn.Conv1d(128, 1024, 1)
+            self.feat_transformer = SpatialTransformerkd(channels, k=channels)
+        self.conv1 = nn.Conv1d(2, channels, 1)
+        self.conv2 = nn.Conv1d(channels, 2*channels, 1)
+        self.conv3 = nn.Conv1d(2*channels, 16*channels, 1)
 
-        self.bn1 = nn.BatchNorm1d(64)
-        self.bn2 = nn.BatchNorm1d(128)
-        self.bn3 = nn.BatchNorm1d(1024)
+        self.bn1 = nn.BatchNorm1d(channels)
+        self.bn2 = nn.BatchNorm1d(2*channels)
+        self.bn3 = nn.BatchNorm1d(16*channels)
+
+        self.channels = channels
+
+        # self.conv1 = nn.Conv1d(2, 64, 1)
+        # self.conv2 = nn.Conv1d(64, 128, 1)
+        # self.conv3 = nn.Conv1d(128, 1024, 1)
+
+        # self.bn1 = nn.BatchNorm1d(64)
+        # self.bn2 = nn.BatchNorm1d(128)
+        # self.bn3 = nn.BatchNorm1d(1024)
 
         self.global_feat = global_feat
         self.feat_transform = feature_transform
@@ -124,29 +165,41 @@ class PointNetFeat(nn.Module):
         x = F.relu(self.bn2(self.conv2(x)))
         x = self.bn3(self.conv3(x))
         x = torch.max(x, 2, keepdim=True)[0]
-        x = x.view(-1, 1024)
+        x = x.view(-1, 16*self.channels)
         if self.global_feat:
             return x, trans, trans_feat
         else:
-            x = x.view(-1, 1024, 1).repeat(1, 1, n_pts)
+            x = x.view(-1, 16*self.channels, 1).repeat(1, 1, n_pts)
             return torch.cat([x, pointfeat], 1), trans, trans_feat
 
 
 class PointNet(nn.Module):
-    def __init__(self, k=16, feature_transform=False):
+    def __init__(self, channels=64, embed_dim=16, feature_transform=False):
         super().__init__()
         self.feature_transform = feature_transform
-        self.feat = PointNetFeat(global_feat=True,
+        self.feat = PointNetFeat(channels,
+                                 global_feat=True,
                                  feature_transform=feature_transform)
-        self.fc1 = nn.Linear(1024, 512)
-        self.fc2 = nn.Linear(512, 256)
-        self.fc3 = nn.Linear(256, k)
+
+        self.fc1 = nn.Linear(16*channels, 8*channels)
+        self.fc2 = nn.Linear(8*channels, 4*channels)
+        self.fc3 = nn.Linear(4*channels, embed_dim)
 
         self.dropout = nn.Dropout(p=0.3)
 
-        self.bn1 = nn.BatchNorm1d(512)
-        self.bn2 = nn.BatchNorm1d(256)
+        self.bn1 = nn.BatchNorm1d(8*channels)
+        self.bn2 = nn.BatchNorm1d(4*channels)
         self.relu = nn.ReLU()
+
+        # self.fc1 = nn.Linear(1024, 512)
+        # self.fc2 = nn.Linear(512, 256)
+        # self.fc3 = nn.Linear(256, embed_dim)
+
+        # self.dropout = nn.Dropout(p=0.3)
+
+        # self.bn1 = nn.BatchNorm1d(512)
+        # self.bn2 = nn.BatchNorm1d(256)
+        # self.relu = nn.ReLU()
 
     def forward(self, x):
         x, trans, trans_feat = self.feat(x)
