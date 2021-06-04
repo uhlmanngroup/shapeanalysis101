@@ -2,7 +2,7 @@ name: shapeanalysis101
 channels:
   - conda-forge
   - pytorch
-  - nvida
+  - nvidia
   - defaults
 dependencies:
   - h5py
