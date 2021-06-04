@@ -2,8 +2,8 @@ import os
 import random
 import numpy as np
 import torch
-from torch.utils.data import Dataset, DataLoader, WeightedRandomSampler
-from supervised_contrastive.utils import Center, RandomCoordsFlip
+from torch.utils.data import Dataset, DataLoader
+from shape_embeddings.utils import Center, RandomCoordsFlip
 
 
 def get_MEF_loaders(path_to_dataset, batch_size=10, transforms=None):

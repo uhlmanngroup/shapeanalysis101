@@ -1,143 +1,101 @@
-import os
-import argparse
-import random
-import tqdm
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
+import time
 import numpy as np
-from sklearn.cluster import KMeans
-from torch.utils.data import Dataset, DataLoader
-from skimage.measure import label
-from skimage.exposure import rescale_intensity
+import torch.optim as optim
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import StratifiedKFold
 from sklearn import metrics
+from criterion import SupConLoss
 from model import PointNet
-from criterion import DiscriminiativeLoss
-from data_loading import get_celegans_loaders
-import napari
+from data_handling import get_MEF_loaders
+import warnings
+warnings.filterwarnings('ignore') 
 
 
-def validation_loop(network, criterion, kmeans, val_loader):
-    network.eval()
-    X = []
-    labels = []
-    with torch.no_grad():
-        accuracy = 0.0
-        running_loss = 0.0
-        for data in val_loader:
-        #for data in tqdm.tqdm(val_loader):
-            points = data[0]
-            label = data[1]
+def validation_loop(model, criterion, val_loader):
+    model.eval()
+    run_loss = 0.0
+    features = []
+    gt = []
+    for i, data in enumerate(val_loader):
+        labels, points = data
+        out, embed = model(points)
+        features += [embed.detach().cpu().numpy()]
+        gt += [labels]
+        loss = criterion(out.unsqueeze(1), labels)
+        run_loss += run_loss
 
-            outputs = network(points)
-            loss = criterion(outputs, label)
+    features = np.concatenate(features)
+    labels = np.concatenate(gt)
 
-            with napari.gui_qt():
-                viewer = napari.Viewer()
-                viewer.add_points(points[0].numpy().T, size=0.5, face_color='red')
-            print(label)
-
-            X += [outputs.cpu().numpy()]
-            labels += [label]
-            running_loss += loss.item()
-    labels = np.concatenate(labels)
-    X = np.concatenate(X)
     skf = StratifiedKFold(n_splits=5)
     scores = []
-    for train_idx, test_idx in skf.split(X, labels):
+    for train_idx, test_idx in skf.split(features, labels):
         logistic_regr = LogisticRegression(C=1, multi_class='auto', solver='lbfgs')
-        logistic_regr.fit(X[train_idx], labels[train_idx])
-        score = logistic_regr.score(X[test_idx], labels[test_idx])
+        logistic_regr.fit(features[train_idx], labels[train_idx])
+        score = logistic_regr.score(features[test_idx], labels[test_idx])
         scores.append(score)
 
-        preds = logistic_regr.predict(X[test_idx])
+        preds = logistic_regr.predict(features[test_idx])
         conf_matrix = metrics.confusion_matrix(labels[test_idx], preds)
         # print("The accuracy is {0}".format(score))
         # print(conf_matrix)
 
     scores = np.array(scores)
+    print('Avg accuracy: %.3f' % (scores.mean()))
 
-    # print('validation accuracy/loss: [%.3f, %.3f]' %
-    #       (accuracy, running_loss / len(val_loader)))
-    # print('valdiation accuracy: [%.3f]' % (np.mean(scores)))
-    pred_labels = kmeans.predict(X)
-    # accuracy = (pred_labels == labels).sum() / len(labels)
-    coords1 = np.where(labels == 0)
-    coords2 = np.where(labels == 1)
-    acc1 = np.mean((pred_labels[coords1] == labels[coords1]))
-    acc2 = np.mean((pred_labels[coords2] == labels[coords2]))
+    return run_loss / len(val_loader)
 
-    print((acc1 + acc2) / 2, acc1, acc2)
-    print('rand', metrics.adjusted_rand_score(labels, pred_labels))
-    network.train()
+def train_loop(model, criterion, optimizer, train_loader, epoch):
+    run_loss = 0.0
+    for i, data in enumerate(train_loader):
+        labels, points = data
 
+        # zero parameter gradients
+        optimizer.zero_grad()
 
-def train_loop(network, criterion, optimizer, train_loader, val_loader):
-    for epoch in range(1000):
-        running_loss = 0.0
-        i = 0
-        d = 0
-        embed = []
-        for data in train_loader:
-            points = data[0]
-            labels = data[1]
-            d += labels.sum()
+        # forward
+        outputs, embed = model(points)
 
-            # zero parameter gradients
-            optimizer.zero_grad()
+        # loss + backward
+        loss = criterion(outputs.unsqueeze(1), labels)
+        loss.backward()
 
-            # forward
-            outputs = network(points)
+        # optimizer update
+        optimizer.step()
 
-            # loss + backward
-            loss = criterion(outputs, labels)
-            loss.backward()
-            embed += [outputs.detach().numpy()]
-
-            # optimizer update
-            optimizer.step()
-
-            # print statistics
-            running_loss += loss.item()
-            if i % 10 == 0:
-                # print('[%d, %d] loss: %.3f' %
-                #       (epoch + 1, i + 1, running_loss / 100))
-                running_loss = 0.0
-            i+=1
-        embed = np.concatenate(embed)
-        kmeans = KMeans(n_clusters=2, random_state=0).fit(embed)
-        validation_loop(network, criterion, kmeans, val_loader)
+        # print statistics
+        run_loss += loss.item()
+        #print('[%d, %d] loss: %.3f' % (epoch + 1, i + 1, loss.item()))
+    avg_loss = run_loss / len(train_loader)
+    print('Avg loss: %.3f' % (avg_loss))
+    return avg_loss
 
 
-def main():
-    # Data handling
-    loaders = get_celegans_loaders(celegans_masks_dir,
-                                   celegans_labels_dir,
-                                   cells_masks_dir,
-                                   nuclei_masks_dir,
-                                   args.batch_size)
-    train_loader, val_loader, test_loader = loaders
+def main(path_to_data):
+    train_loader, val_loader = get_MEF_loaders(path_to_data, batch_size=100)
 
     # Model
-    network = PointNet(channels=16, embed_dim=8, feature_transform=True)
+    model = PointNet(embed_dim=2048, feat_dim=128, feature_transform=True)
 
     # criterion and optimizer
-    criterion = DiscriminiativeLoss(0.5, 2.0)
-    optimizer = optim.Adam(network.parameters(), lr=0.0001, weight_decay=0.0001)
+    criterion = SupConLoss()
+    optimizer = optim.Adam(model.parameters(), lr=0.0001, weight_decay=0.0001)
 
-    # train
-    train_loop(network, criterion, optimizer, train_loader, val_loader)
+    for epoch in range(1, 1000):
+        if epoch == 1:
+            loss = validation_loop(model, criterion, val_loader)
+        # train for one epoch
+        time1 = time.time()
+        loss = train_loop(model, criterion, optimizer, train_loader, epoch)
+        time2 = time.time()
+        print('epoch {}, total time {:.2f}'.format(epoch, time2 - time1))
+
+        # validate
+        if epoch % 4 == 0:
+            loss = validation_loop(model, criterion, val_loader)
 
 
-if __name__=='__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--batch_size', type=int, default=12)
-    args = parser.parse_args()
-    celegans_masks_dir = 'data/BBBC010/masks'
-    celegans_labels_dir = 'data/BBBC010/labels'
-    cells_masks_dir = 'data/BBBC020/BBC020_v1_outlines_cells'
-    nuclei_masks_dir = 'data/BBBC020/BBC020_v1_outlines_nuclei'
-    main()
+
+if __name__ == '__main__':
+    path_to_data = 'data/MEF_LMNA/mef_data.npy'
+    main(path_to_data)

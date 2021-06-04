@@ -1,8 +1,12 @@
 name: shapeanalysis101
 channels:
   - conda-forge
+  - pytorch
   - defaults
 dependencies:
+  - h5py=3.1.0
+  - pytorch=1.6.0
+  - scikit-learn=0.23.2
   - ca-certificates=2020.12.5=h033912b_0
   - certifi=2020.12.5=py37hf985489_1
   - libcxx=11.1.0=habf9029_0
