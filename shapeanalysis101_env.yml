@@ -2,16 +2,17 @@ name: shapeanalysis101
 channels:
   - conda-forge
   - pytorch
+  - nvida
   - defaults
 dependencies:
   - h5py
   - jupyter
-  - cudatoolkit=10.2
+  - cudatoolkit=11.1
   - python=3.7.7
-  - pytorch=1.6.0
+  - pytorch=1.8.1
   - matplotlib
   - numpy
-  - scipy
+  - scipy=1.5.3
   - scikit-image
   - scikit-learn=0.23.2
 
