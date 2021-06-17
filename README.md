@@ -16,13 +16,13 @@
 
 ### To cite
 If you reuse pieces of code from this course for your own research, please acknowledge them as follows:
-    - For the spline models library `spline_curve_model`:
+* For the spline models library `spline_curve_model`:
         Uhlmann group's Spline Fitting Toolbox v1.0
 
-    - For `2B - Continuous Shape Analysis`: 
+* For `2B - Continuous Shape Analysis`: 
         Song, A., Uhlmann, V., Fageot, J., & Unser, M. (2020). Dictionary learning for two-dimensional Kendall shapes. SIAM Journal on Imaging Sciences, 13(1), 141-175.
 
-    - For `3 - Shape Embeddings`: 
+* For `3 - Shape Embeddings`: 
         Hugger, J., Uhlmann, V., (2021). Shape Embeddings for Biological Morphology Quantification. Preprint.
 
 

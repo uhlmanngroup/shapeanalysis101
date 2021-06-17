@@ -6,7 +6,7 @@ Please acknowledge as Uhlmann group's Spline Fitting Toolbox v1.0
 
 import numpy as np
 
-class spline_curve:
+class B3_spline_curve:
     wrongDimensionMessage = 'It looks like coefs is a 2D array with second dimension different than two. I don\'t know how to handle this.'
     wrongArraySizeMessage = 'It looks like coefs is not a 2D array. I don\'t know how to handle this.'
     noCoefsMessage = 'This model doesn\'t have any coefficients.'
