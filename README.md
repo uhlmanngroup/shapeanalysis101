@@ -28,7 +28,7 @@ If you reuse pieces of code from this course for your own research, please ackno
 
 ### Further reading
 * Dryden, I. L., & Mardia, K. V. (2016). Statistical shape analysis: with applications in R. John Wiley & Sons.
-* Khosla, P., Teterwak, P., Wang, C., Sarna, A., Tian, Y., Isola, P., Maschinot, A., Liu, C. & Krishnan, D. (2020). Supervised contrastive learning. aarXiv:2004.11362.
+* Khosla, P., Teterwak, P., Wang, C., Sarna, A., Tian, Y., Isola, P., Maschinot, A., Liu, C. & Krishnan, D. (2020). Supervised contrastive learning. arXiv:2004.11362.
 
 ### Acknowledgements
 Part of the material from this course was adapted from Paula Balcells' Bachelor Thesis work carried out in the Uhlmann group. We also thank Anna Song for useful discussions and Jean Feydy for sharing his excellent teaching material (https://www.jeanfeydy.com/Teaching/), which inspired part of this course's structure. 
