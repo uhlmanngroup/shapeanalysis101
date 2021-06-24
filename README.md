@@ -2,13 +2,19 @@
 
 ### To use
 1. Create conda environment from yaml file:
-    `conda env create -f shapeanalysis101_env.yml`
+    ```
+    conda env create -f shapeanalysis101_env.yml
+    ```
 
 2. Activate environment:
-    `source activate shapeanalysis101`
+    ```
+    source activate shapeanalysis101
+    ```
     
 3. Start jupyter server:
-    `jupyter notebook`
+    ```
+    jupyter notebook
+    ```
     
 4. Explore and modify the various `.ipynb` notebooks
 
