@@ -12,7 +12,18 @@
     
 4. Explore and modify the various `.ipynb` notebooks
 
-5. Answer sheets can be found on the `solutions` folder
+5. Answer sheets can be found on the `solutions` folder. To run them, simply move the [Solution]| notebook you would like to run to the base `shapeanalysis101` repository.
+
+### Troubleshooting
+
+If the `shapeanalysis101_env.yml` fails to install for whichever reason, try and use `env_wo_gpu.yml` instead as follows:
+
+```
+conda env create -f env_wo_gpu.yml
+source activate shapeanalysis101_2
+```
+
+You can then resume at step 3 above.
 
 ### To cite
 If you reuse pieces of code from this course for your own research, please acknowledge them as follows:
