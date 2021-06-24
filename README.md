@@ -12,7 +12,7 @@
     
 4. Explore and modify the various `.ipynb` notebooks
 
-5. Answer sheets can be found on the `solutions` folder. To run them, simply move the [Solution]| notebook you would like to run to the base `shapeanalysis101` repository.
+5. Answer sheets can be found on the `solutions` folder. To run them, simply move the [Solution] notebook you would like to run to the base `shapeanalysis101` repository.
 
 ### Troubleshooting
 
