@@ -84,7 +84,7 @@ class B3_spline_curve:
                     value += self.coefs[k] * splineValue
 
         else:
-            for k in range(0, self.M-1+int(self.gen.support)):
+            for k in range(0, self.M+int(self.gen.support)):
                 tval = t - (k - self.halfSupport)
                 if (tval > -self.halfSupport and tval < self.halfSupport):
                     if dt:
