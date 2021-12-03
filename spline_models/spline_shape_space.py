@@ -144,14 +144,34 @@ class B3_PCA:
         else:
             self.M=M+4
 
+        self.shapeSpace=B3_shape_space(M, self.closed)
         self.frechetMean=frechetMean
 
         Phi = B3_Phi(self.M)
-        self.Psi = np.concatenate((np.hstack((Phi,0*Phi)),np.hstack((0*Phi,Phi))))
+        Psi = np.concatenate((np.hstack((Phi,0*Phi)),np.hstack((0*Phi,Phi))))
+        self.basisFactor = sqrtm(Psi)
 
-        self.pcPhi=None
+        self.basisPC=None
         self.diag=None
-        self.complexPc=None
+        self.mean=None
+
+    def transform(self, dataset):
+        K=len(dataset)
+
+        if self.frechetMean is None:
+            self.frechetMean=self.shapeSpace.meanFrechet(dataset)
+
+        logMapped=np.zeros(dataset.shape, dtype=complex)
+        for k in range(0, K):
+            logMapped[k]=self.shapeSpace.log(self.frechetMean, dataset[k])
+
+        self.fit(logMapped)
+
+        self.pcWeights=np.zeros((K,2*self.M))
+        for k in range(0, K):
+            self.pcWeights[k]=self.project(logMapped[k])
+
+        return
 
     def fit(self, data):
         ''' Classical linear PCA
@@ -166,18 +186,16 @@ class B3_PCA:
         '''
 
         K=len(data)
-
-        mean = np.mean(data,0) # not necessarily zero
-        V=(data - mean)
         V=data
-
-        sqrtPsi = sqrtm(self.Psi)
-
+        
         Vr = np.zeros((K,2*self.M))
         Vr[:,:self.M] = V.real
         Vr[:,self.M:] = V.imag
 
-        Y = Vr @ sqrtPsi
+        Y = Vr @ self.basisFactor 
+        self.mean = np.mean(Y, axis=0)
+        Y -= self.mean
+
         Diag,Vmodes = np.linalg.eig(Y.T @ Y)
         Diag = Diag.real
         Vmodes = Vmodes.real
@@ -187,35 +205,36 @@ class B3_PCA:
 
         self.diag = Diag[sortindr]
         Vmodes = Vmodes[:,sortindr]
-        
-        Wmodes = np.linalg.inv(sqrtPsi) @ Vmodes # eigenmodes in the tangent plane at m
-        W=np.zeros((self.M,2*self.M), dtype=complex)
-        W.real=Wmodes[:self.M,:]
-        W.imag=Wmodes[self.M:,:]
-        self.pcPhi=Vmodes
-        self.complexPC=W
+        self.basisPC=Vmodes
 
     def project(self, v):
-        sqrtPsi = sqrtm(self.Psi)
-
         vr = np.zeros((2*self.M))
         vr[:self.M] = v.real
         vr[self.M:] = v.imag
 
         pcWeight=np.zeros((2*self.M))
         for k in range(2*self.M):
-            y = vr @ sqrtPsi
-            pcWeight[k] = y @ self.pcPhi[:,k]
+            y = vr @ self.basisFactor 
+            y -= self.mean
+            pcWeight[k] = y @ self.basisPC[:,k]
 
         return pcWeight
 
-    def reconstruct(self, v, count=0):
+    def reconstruct(self, data, count=0):
+        v = self.shapeSpace.log(self.frechetMean, data)
         pcWeight=self.project(v)
         if count<1:
             count=len(pcWeight)
 
-        reconstruction=np.zeros((self.M), dtype=complex)
+        reconstructedLatent = np.zeros((2*self.M))
         for k in range(count):
-            reconstruction+=(pcWeight[k]*self.complexPC[:,k])
+            reconstructedLatent += (pcWeight[k] * self.basisPC[:,k])
+        reconstructedLatent += self.mean
 
-        return reconstruction
+        reconstruction = np.linalg.inv(self.basisFactor) @ reconstructedLatent
+
+        complexReconstruction = np.zeros((self.M,), dtype=complex)
+        complexReconstruction.real = reconstruction[:self.M]
+        complexReconstruction.imag = reconstruction[self.M:]
+
+        return self.shapeSpace.exponentialMap(self.frechetMean, complexReconstruction)
