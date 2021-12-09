@@ -45,6 +45,7 @@ If you reuse pieces of code from this course for your own research, please ackno
 
 ### Further reading
 * Dryden, I. L., & Mardia, K. V. (2016). Statistical shape analysis: with applications in R. John Wiley & Sons.
+* Klingenberg, C. P. (2020). Walking on Kendall’s Shape Space: Understanding Shape Spaces and Their Coordinate Systems. Evolutionary Biology, 47(4), 334–352.
 * Khosla, P., Teterwak, P., Wang, C., Sarna, A., Tian, Y., Isola, P., Maschinot, A., Liu, C. & Krishnan, D. (2020). Supervised contrastive learning. arXiv:2004.11362.
 
 ### Acknowledgements
