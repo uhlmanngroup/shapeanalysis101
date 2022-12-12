@@ -29,7 +29,22 @@ conda env create -f env_wo_gpu.yml
 source activate shapeanalysis101_2
 ```
 
+If `env_wo_gpu.yml` also fails to install, you can create a fresh environment that will be sufficient to run notebook 1, 2A, and 2B with the following commands:
+
+```
+conda create -y -n shapeanalysis101_3 -c conda-forge python=3.8
+source activate shapeanalysis101_3
+conda install jupyter
+conda install h5py
+conda install imageio
+conda install matplotlib
+conda install scikit-learn
+conda install scikit-image
+```
+
 You can then resume at step 3 above.
+
+
 
 ### To cite
 If you use the exercise notebooks from this tutorial, please acknowledge it as follows:
